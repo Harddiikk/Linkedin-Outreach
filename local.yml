@@ -13,4 +13,5 @@ services:
     volumes:
       - .:/app
     ports:
-      - "5900:5900"
+      - "5901:5900"
+    restart: unless-stopped

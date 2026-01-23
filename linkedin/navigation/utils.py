@@ -1,5 +1,6 @@
 # linkedin/navigation/utils.py
 import logging
+from termcolor import colored
 from urllib.parse import unquote, urlparse, urljoin
 
 from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
@@ -31,6 +32,20 @@ def goto_page(session: "AccountSession",
     session.wait(to_scrape=to_scrape)
 
     current = unquote(page.url)
+    if "checkpoint" in current:
+        logger.warning(colored("\n" + "!" * 60, "yellow", attrs=["bold"]))
+        logger.warning(colored("CHECKPOINT DETECTED!", "yellow", attrs=["bold"]))
+        logger.warning("LinkedIn is asking for verification (CAPTCHA or 2FA).")
+        logger.warning("Please connect to VNC (localhost:5900) and solve it manually.")
+        logger.warning(colored("!" * 60 + "\n", "yellow", attrs=["bold"]))
+        
+        # Wait for user to solve it and reach the expected URL
+        try:
+            page.wait_for_url(lambda url: expected_url_pattern in unquote(url), timeout=600_000) # 10 minutes, increased for user to have time
+            current = unquote(page.url)
+        except PlaywrightTimeoutError:
+            raise RuntimeError(f"Checkpoint timeout – user did not solve it in time. Current URL: {current}")
+
     if expected_url_pattern not in current:
         raise RuntimeError(f"{error_message} → expected '{expected_url_pattern}' | got '{current}'")
 

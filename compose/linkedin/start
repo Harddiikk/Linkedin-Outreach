@@ -17,8 +17,14 @@ sleep 1
 # Set the DISPLAY environment variable
 export DISPLAY=:99
 
-# Start x11vnc attached to the Xvfb display (no password for simplicity; add -passwd 'yourpass' if needed)
-x11vnc -display :99 -forever -shared -nopw &
+# Start x11vnc attached to the Xvfb display
+# Start x11vnc in a background loop to ensure it restarts if it crashes
+(
+    while true; do
+        x11vnc -display :99 -forever -shared -nopw -rfbport 5900 -noxdamage
+        sleep 1
+    done
+) &
 
 # Run the main Python script/module
 python main.py
